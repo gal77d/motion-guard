@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PC Motion Guard - Link Device</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 { font-size: 22px; margin-bottom: 10px; }
+        p { color: #b0b0b0; font-size: 14px; margin-bottom: 20px; }
+        #qrcode {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        #qrcode img {
+            display: block;
+        }
+        .settings {
+            margin-top: 15px;
+            text-align: left;
+            background: #2a2a2a;
+            padding: 12px;
+            border-radius: 6px;
+        }
+        .settings label {
+            display: block;
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Connect Your Phone</h1>
+        <p>Scan the QR code below with your phone camera to link it to this PC.</p>
+        
+        <!-- Here the QR code will appear -->
+        <div id="qrcode">
+            <p style="color: black; margin:0;">Loading QR Code...</p>
+        </div>
+
+        <div class="settings">
+            <strong>Action on Motion:</strong>
+            <label><input type="radio" name="action" value="shutdown" checked> Full PC Shutdown</label>
+            <label><input type="radio" name="action" value="screen_off"> Screen Off Only (Keep Audio)</label>
+        </div>
+    </div>
+
+    <!-- Socket.IO library to talk to the server -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        // Request a new session and QR code from the server when page loads
+        socket.emit('request_new_session');
+
+        // Listen for the server to send the QR code
+        socket.on('session_created', (data) => {
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = `<img src="${data.qrCode}" alt="Scan QR Code" width="200" height="200">`;
+        });
+
+        // Send chosen action updates to server if user changes settings
+        document.querySelectorAll('input[name="action"]').forEach((elem) => {
+            elem.addEventListener("change", function(event) {
+                socket.emit('update_action_preference', { action: event.target.value });
+            });
+        });
+    </script>
+
+</body>
+</html>
